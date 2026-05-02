@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: fer-emotion-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: MODEL_DEVICE
+        value: "cpu"
+    healthCheckPath: /health
+    autoDeploy: true
