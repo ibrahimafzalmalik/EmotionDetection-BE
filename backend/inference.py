@@ -5,10 +5,11 @@ from __future__ import annotations
 import base64
 import io
 import logging
+import pickle
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import torch
 from PIL import Image, UnidentifiedImageError
@@ -24,6 +25,39 @@ LOGGER = logging.getLogger(__name__)
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
+
+
+class _CompatUnpickler(pickle.Unpickler):
+    """Allow checkpoints saved on Windows (WindowsPath) to load on Linux."""
+
+    def find_class(self, module: str, name: str) -> Any:
+        if module == "pathlib" and name in ("WindowsPath", "PosixPath"):
+            return Path
+        return super().find_class(module, name)
+
+
+class _CompatPickleModule:
+    Unpickler = _CompatUnpickler
+    Pickler = pickle.Pickler
+
+
+def _load_checkpoint(checkpoint_path: Path, device: torch.device) -> Dict[str, Any]:
+    """Load a training checkpoint; tolerate Windows-path pickles on Linux hosts."""
+    try:
+        ckpt = torch.load(checkpoint_path, map_location=device, weights_only=True)
+        if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
+            return ckpt
+    except Exception:
+        pass
+    try:
+        return torch.load(
+            checkpoint_path,
+            map_location=device,
+            weights_only=False,
+            pickle_module=_CompatPickleModule,
+        )
+    except TypeError:
+        return torch.load(checkpoint_path, map_location=device)
 
 
 class InferenceEngine:
@@ -50,11 +84,7 @@ class InferenceEngine:
         )
 
         self.model = CustomCNN(num_classes=CFG.NUM_CLASSES, dropout_rate=CFG.DROPOUT_RATE)
-        try:
-            state = torch.load(checkpoint_path, map_location=self.device, weights_only=False)
-        except TypeError:
-            # WHY: Older PyTorch builds omit ``weights_only``; keep local dev working without pinning.
-            state = torch.load(checkpoint_path, map_location=self.device)
+        state = _load_checkpoint(checkpoint_path, self.device)
         self.model.load_state_dict(state["model_state_dict"])
         self.model.to(self.device)
         self.model.eval()
