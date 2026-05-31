@@ -1,7 +1,7 @@
 # Push EmotionDetection-BE and EmotionDetection-FE to syedahinamukhtar-dev on GitHub.
-# All commits are already rewritten to: Syeda Hina Mukhtar <288886451+syedahinamukhtar-dev@users.noreply.github.com>
+# Commits use author: Syeda Hina Mukhtar <288886451+syedahinamukhtar-dev@users.noreply.github.com>
 #
-# One-time setup (as syedahinamukhtar-dev):
+# One-time setup (signed in as syedahinamukhtar-dev):
 #   gh auth login
 #
 # Then run:
