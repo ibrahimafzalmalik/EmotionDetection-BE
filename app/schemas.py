@@ -37,15 +37,6 @@ class HealthResponse(BaseModel):
 
     status: str
     uptime_seconds: float
-    model_loaded: bool = Field(..., description="Whether the PyTorch checkpoint is loaded for inference.")
-    checkpoint_bytes: int | None = Field(
-        default=None,
-        description="On-disk size of the checkpoint file, if present.",
-    )
-    model_error: str | None = Field(
-        default=None,
-        description="Last model load error message, if inference is unavailable.",
-    )
 
 
 class HistoryResponse(BaseModel):
@@ -70,4 +61,3 @@ class RootHealthResponse(BaseModel):
     status: str
     model: str
     classes: List[str]
-    model_loaded: bool = Field(..., description="Whether inference endpoints can run.")
